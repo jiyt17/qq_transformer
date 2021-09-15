@@ -117,7 +117,7 @@ RUNTIME:
   REPORT_STEPS: 25
   USE_SEED: true
   DEBUG: false
-  SAVE_MODEL_DIR: "local://./result/transformer_v2"
+  SAVE_MODEL_DIR: "local://./result/transformer_v1"
   METRICS: "PRScore"
   EXPORT:
     TYPE: torch_nn

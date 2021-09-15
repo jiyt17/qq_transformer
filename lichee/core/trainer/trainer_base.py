@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from tqdm import tqdm
 
 import torch
 from torch import distributed as dist
@@ -141,8 +142,8 @@ class TrainerBase:
 
     def init_dataloader(self):
         self.train_dataloader = self.gen_dataloader(self.cfg.DATASET.TRAIN_DATA, training=True)
-        if "EVAL_DATA" in self.cfg.DATASET:
-            self.eval_dataloader = self.gen_dataloader(self.cfg.DATASET.EVAL_DATA, training=False)
+        # if "EVAL_DATA" in self.cfg.DATASET:
+        #     self.eval_dataloader = self.gen_dataloader(self.cfg.DATASET.EVAL_DATA, training=False)
         self.cfg.TRAINING.TRAIN_TOTAL_STEPS = len(self.train_dataloader) * self.cfg.TRAINING.EPOCHS
 
     def init_model(self):
@@ -178,7 +179,7 @@ class TrainerBase:
         self.model.train()
         # self.train_dataloader.dataset.is_training = True
 
-        for step, batch in enumerate(self.train_dataloader):
+        for step, batch in tqdm(enumerate(self.train_dataloader)):
             self.optimizer.zero_grad()
             inputs = self.get_inputs_batch(batch)
             label_keys, labels = self.get_label_batch(batch)
@@ -227,6 +228,7 @@ class TrainerBase:
             return
         epoch_eval_data = {"Key": "Epoch_" + str(epoch), 'epoch': epoch}
         self.eval_data.append(epoch_eval_data)
+       
         self.model.eval()
         total_loss = 0.0
         num_batch = len(self.eval_dataloader)

@@ -12,8 +12,8 @@ class config:
         self.FF_SIZE = 1024
         self.MULTI_HEAD = 12
         self.HIDDEN_SIZE_HEAD = 64
-        self.X_LAYER = 4
-        self.V_LAYER = 3
+        self.X_LAYER = 5
+        self.V_LAYER = 4
         self.L_LAYER = 1
 
 

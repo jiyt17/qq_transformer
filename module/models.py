@@ -150,10 +150,11 @@ class EmbeddingTrainer(TrainerBase):
 
     def save_model(self, epoch):
         self.model.eval()
-        self.temporary_map.update(self.eval_data[-1])  # update temporary_map with latest eval info
+        # self.temporary_map.update(self.eval_data[-1])  # update temporary_map with latest eval info
+        self.temporary_map.update({'epoch':epoch})
         tmp_epoch_model_file = sys_tmpfile.get_temp_file_path_once()
         save_model_path = os.path.join(self.cfg.RUNTIME.SAVE_MODEL_DIR, "checkpoint",
-                                       "Epoch_{epoch}_{precision:.4f}_{recall:.4f}_{spearman:.4f}.bin".format_map(
+                                       "Epoch_{epoch}_{spearman:.4f}.bin".format_map(
                                            self.temporary_map))
         torch_nn_convertor.TorchNNConvertor.save_model(self.model, None, tmp_epoch_model_file)
         storage.put_storage_file(tmp_epoch_model_file, save_model_path)
@@ -166,7 +167,7 @@ class EmbeddingTrainer(TrainerBase):
             if 'SPEARMAN_EVAL' in self.cfg.DATASET:  # run spearman test if eval if SPEARMAN_EVAL config is found
                 self.evaluate_spearman(dataset_key='SPEARMAN_EVAL')
             if self.eval_dataloader:  # run eval
-                self.eval_model(epoch)
+               self.eval_model(epoch)
             self.save_model(epoch)
 
     def load_checkpoint_for_eval(self, checkpoint_file):
