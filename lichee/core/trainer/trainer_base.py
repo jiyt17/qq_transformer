@@ -175,7 +175,20 @@ class TrainerBase:
                 self.save_eval_data()
             self.save_model(epoch)
 
-    def train_epoch(self):
+    def train_epoch(self, epoch):
+
+        gradual_warmup_steps = [0.5, 1.0, 1.5]
+        lr_decay_epochs = range(10, 20, 2)
+
+        if epoch <= len(gradual_warmup_steps):
+            self.optimizer.param_groups[0]['lr'] = gradual_warmup_steps[epoch-1] * self.optimizer.param_groups[0]['initial_lr']
+            self.optimizer.param_groups[1]['lr'] = gradual_warmup_steps[epoch-1] * self.optimizer.param_groups[1]['initial_lr']
+        elif epoch in lr_decay_epochs:
+            self.optimizer.param_groups[0]['lr'] *= 0.2
+            self.optimizer.param_groups[1]['lr'] *= 0.2
+
+        print(self.optimizer.param_groups[0]['lr'], self.optimizer.param_groups[1]['lr'])
+
         self.model.train()
         # self.train_dataloader.dataset.is_training = True
 
