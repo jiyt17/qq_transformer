@@ -5,6 +5,7 @@ import os
 import numpy as np
 import scipy
 import torch
+from torch.nn import MSELoss
 import tqdm
 
 from lichee import plugin
@@ -144,9 +145,68 @@ class EmbeddingTrainer(TrainerBase):
             if k1 not in embedding_map or k2 not in embedding_map:
                 continue
             sim_res.append((v, (embedding_map[k1] * embedding_map[k2]).sum()))
+
         spearman = scipy.stats.spearmanr([x[0] for x in sim_res], [x[1] for x in sim_res]).correlation
         logging.info('spearman score: {}'.format(spearman))
         self.temporary_map['spearman'] = spearman
+
+    def finetune(self, checkpoint_file='', dataset_key="SPEARMAN_EVAL"):
+        """
+        :param checkpoint_file: the checkpoint used to evaluate the dataset
+        :param dataset_key: dataset indicator key, defined by your_config.yaml DATASET block
+        :return:
+        """
+        if checkpoint_file:
+            self.load_checkpoint_for_eval(checkpoint_file)
+        
+        dataset_config = self.cfg.DATASET[dataset_key]
+        dataset_loader = self.gen_dataloader(dataset_config, training=False)
+
+        annotate = {}
+        label_file = storage.get_storage_file(dataset_config['LABEL_FILE'])
+        with open(label_file, 'r') as f:
+            lines = f.readlines()
+            for line in lines:
+                line = line.strip()
+                rk1, rk2, score = line.split('\t')
+                annotate[(rk1, rk2)] = float(score)
+
+        loss_fun = MSELoss()
+        optim = torch.optim.Adamax(self.model.parameters(), lr=0.00005)
+
+        for epoch in range(5):
+
+            self.model.train()
+
+            process_bar = tqdm.tqdm(dataset_loader, desc='finetune epoch%d: '%epoch, ncols=100)
+            for batch in process_bar:
+
+                optim.zero_grad()
+                inputs = self.get_inputs_batch(batch)
+                ids = batch['id']
+                (logits, embedding), _ = self.model(inputs)
+
+                GT_sim = torch.tensor([]).cuda()
+                gen_sim = torch.tensor([]).cuda()
+                for (k1, k2), v in annotate.items():
+                    if k1 in ids and k2 in ids:
+                        GT_sim = torch.cat((GT_sim, torch.tensor([v*2/5+0.6]).cuda()))
+                        gen_sim = torch.cat((gen_sim, (embedding[ids.index(k1)] * embedding[ids.index(k2)]).sum().unsqueeze(0)))
+                
+                loss = loss_fun(GT_sim, gen_sim)
+                loss.backward()
+                optim.step()
+
+                process_bar.set_postfix(mse_loss=loss.item())
+                process_bar.update()
+
+            self.model.eval()
+            tmp_epoch_model_file = sys_tmpfile.get_temp_file_path_once()
+            save_model_path = os.path.join(self.cfg.RUNTIME.SAVE_MODEL_DIR, "checkpoint", "Finetune_Epoch_%d.bin"%epoch)
+            torch_nn_convertor.TorchNNConvertor.save_model(self.model, None, tmp_epoch_model_file)
+            storage.put_storage_file(tmp_epoch_model_file, save_model_path)
+
+
 
     def save_model(self, epoch):
         self.model.eval()
@@ -163,7 +223,7 @@ class EmbeddingTrainer(TrainerBase):
         self.save_config_file()
         for epoch in range(1, self.cfg.TRAINING.EPOCHS + 1):
             logging.info("Training Epoch: " + str(epoch).center(60, "="))
-            self.train_epoch()
+            self.train_epoch(epoch)
             if 'SPEARMAN_EVAL' in self.cfg.DATASET:  # run spearman test if eval if SPEARMAN_EVAL config is found
                 self.evaluate_spearman(dataset_key='SPEARMAN_EVAL')
             if self.eval_dataloader:  # run eval
