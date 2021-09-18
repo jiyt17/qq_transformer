@@ -55,7 +55,7 @@ class ConcatCls(torch.nn.Module):
 
     def init_loss(self):
         loss = plugin.get_plugin(plugin.PluginType.MODULE_LOSS, self.cfg['LOSS']['NAME'])
-        self.loss_func = loss.build(self.cfg['LOSS'])
+        self.loss_func = loss.build()
 
 
 @plugin.register_plugin(plugin.PluginType.TRAINER, 'embedding_trainer')

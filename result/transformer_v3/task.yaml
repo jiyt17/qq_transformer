@@ -88,14 +88,14 @@ DATASET:
       - local://data/pointwise/pretrain_7.tfrecords
       - local://data/pointwise/pretrain_8.tfrecords
       - local://data/pointwise/pretrain_9.tfrecords
-    BATCH_SIZE: 156
+    BATCH_SIZE: 128
     WORKER_NUM: 8
     PREFETCH_FACTOR: 2
   SPEARMAN_EVAL:
     DATA_PATH:
       - local://data/pairwise/pairwise.tfrecords
     LABEL_FILE: local://data/pairwise/label.tsv
-    BATCH_SIZE: 128
+    BATCH_SIZE: 64
     WORKER_NUM: 8
     PREFETCH_FACTOR: 2
   SPEARMAN_TEST_A:
@@ -117,7 +117,7 @@ RUNTIME:
   REPORT_STEPS: 25
   USE_SEED: true
   DEBUG: false
-  SAVE_MODEL_DIR: "local://./result/transformer_v2"
+  SAVE_MODEL_DIR: "local://./result/transformer_v3"
   METRICS: "PRScore"
   EXPORT:
     TYPE: torch_nn
@@ -125,7 +125,7 @@ RUNTIME:
     DYNAMIC: true
 
 TRAINING:
-  EPOCHS: 14
+  EPOCHS: 10
   LEARNING_RATE: 0.0001
   OPTIMIZER:
     NAME: LayeredOptim

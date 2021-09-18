@@ -2,6 +2,7 @@ import logging
 from collections import defaultdict
 
 import torch
+import torch.nn as nn 
 
 from lichee import config
 from lichee import plugin
@@ -42,6 +43,10 @@ class ModelStandard(model_base.BaseModel):
         self.build_graph_units()
         # build the topo units
         self.build_topo_units()
+
+        self.conv1 = nn.Conv1d(in_channels=1536, out_channels=768, kernel_size=3, padding=1)
+        self.relu = nn.ReLU(inplace=True)
+        self.v_fc = nn.Linear(1536, 768)
 
         self.vlt = CME()
 
@@ -170,9 +175,15 @@ class ModelStandard(model_base.BaseModel):
         title = l_model(inputs['title'])[1]
         title_mask = inputs['title'][:,2,:]
         title_mask = (title_mask == 0).unsqueeze(1).unsqueeze(2)
+
         video = inputs['frame_feature']
+        video = torch.transpose(video, 1, 2)
+        video = self.relu(self.conv1(video))
+        video = torch.transpose(video, 1, 2)
+        # video = self.relu(self.v_fc(video))
         video_mask = torch.ones(video.shape[0], 1, 1, 32).cuda()
         video_mask = video_mask == 0
+        
         video, title = self.vlt(video, title, video_mask, title_mask)
 
         # generate label inputs

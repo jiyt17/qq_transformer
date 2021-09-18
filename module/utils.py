@@ -1,6 +1,7 @@
 import logging
 
 import six
+import torch
 from torch import nn
 from torch import optim
 
@@ -43,7 +44,6 @@ class LayeredOptim(ConfigOptim):
         else:
             param_list = [
                 {"params": parameters, 'lr': cfg.TRAINING.LEARNING_RATE, 'base_lr': cfg.TRAINING.LEARNING_RATE}]
-
         return optim.Adam(param_list)
 
 
@@ -54,6 +54,34 @@ class BCELoss:
     def build(cls, cfg):
         return nn.BCEWithLogitsLoss(reduction='sum')
 
+
+# bce focal loss
+
+class BCEFocalLoss(torch.nn.Module):
+
+    def __init__(self, gamma=2, alpha=0.6, reduction='elementwise_mean'):
+        super().__init__()
+        self.gamma = gamma
+        self.alpha = alpha
+        self.reduction = reduction
+ 
+    def forward(self, _input, target):
+        pt = torch.sigmoid(_input)
+        #pt = _input
+        alpha = self.alpha
+        loss = - alpha * (1 - pt) ** self.gamma * target * torch.log(pt) - \
+               (1 - alpha) * pt ** self.gamma * (1 - target) * torch.log(1 - pt)
+        if self.reduction == 'elementwise_mean':
+            loss = torch.mean(loss)
+        elif self.reduction == 'sum':
+            loss = torch.sum(loss)
+        return loss
+
+@plugin.register_plugin(plugin.PluginType.MODULE_LOSS, 'FocalLoss')
+class FocalLoss:
+    @classmethod
+    def build(cls):
+        return BCEFocalLoss()
 
 @plugin.register_plugin(plugin.PluginType.MODULE_METRICS, 'PRScore')
 class PRScore:

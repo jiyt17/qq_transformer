@@ -24,8 +24,7 @@ MODEL:
     NUM_CLASSES: 10000
     LABEL_KEY: tag_id
     LOSS:
-      NAME: BCELoss
-      SCALE: 0.001
+      NAME: FocalLoss
 
   GRAPH:
     - NAME: nextvlad
@@ -117,7 +116,7 @@ RUNTIME:
   REPORT_STEPS: 25
   USE_SEED: true
   DEBUG: false
-  SAVE_MODEL_DIR: "local://./result/transformer_v2"
+  SAVE_MODEL_DIR: "local://./result/transformer_v4"
   METRICS: "PRScore"
   EXPORT:
     TYPE: torch_nn
@@ -125,10 +124,10 @@ RUNTIME:
     DYNAMIC: true
 
 TRAINING:
-  EPOCHS: 14
+  EPOCHS: 10
   LEARNING_RATE: 0.0001
   OPTIMIZER:
     NAME: LayeredOptim
 
   SCHEDULER:
-    NAME: constant
+    NAME: warmup_cosine

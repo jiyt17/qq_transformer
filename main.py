@@ -42,6 +42,9 @@ if __name__ == '__main__':
             raise FileExistsError('to save file: {} already existed'.format(args.to_save_file))
         trainer.evaluate_checkpoint(
             dataset_key=args.dataset, checkpoint_file=args.checkpoint, to_save_file=args.to_save_file)
+    elif args.mode == 'finetune':
+        trainer = trainer(args.model_config_file, init_model=False)
+        trainer.finetune(dataset_key=args.dataset, checkpoint_file=args.checkpoint)
     else:
         trainer = trainer(args.model_config_file, init_model=False)
         trainer.evaluate_spearman(dataset_key=args.dataset, checkpoint_file=args.checkpoint)

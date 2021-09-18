@@ -12,8 +12,8 @@ class config:
         self.FF_SIZE = 1024
         self.MULTI_HEAD = 12
         self.HIDDEN_SIZE_HEAD = 64
-        self.X_LAYER = 5
-        self.V_LAYER = 4
+        self.X_LAYER = 4
+        self.V_LAYER = 3
         self.L_LAYER = 1
 
 
@@ -213,13 +213,11 @@ class CME(nn.Module):
     def __init__(self):
         super(CME, self).__init__()
         C = config()
-        self.v_linear = nn.Linear(1536, C.HIDDEN_SIZE)
         self.SA1 = nn.ModuleList([SA(C) for _ in range(C.V_LAYER)])
         self.SA2 = nn.ModuleList([SA(C) for _ in range(C.L_LAYER)])
         self.enc_list = nn.ModuleList([CMEmodule(C) for _ in range(C.X_LAYER)])
 
     def forward(self, x, y, x_mask, y_mask): # vision language
-        x = self.v_linear(x)
         for enc in self.SA1:
             x = enc(x, x_mask)
         for enc in self.SA2:

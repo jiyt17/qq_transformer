@@ -177,20 +177,23 @@ class TrainerBase:
 
     def train_epoch(self, epoch):
 
-        gradual_warmup_steps = [0.5, 1.0, 1.5]
-        lr_decay_epochs = range(10, 20, 2)
+        # gradual_warmup_steps = [0.5, 1.0, 1.5]
+        # lr_decay_epochs = range(1, 20, 1)
 
-        if epoch <= len(gradual_warmup_steps):
-            self.optimizer.param_groups[0]['lr'] = gradual_warmup_steps[epoch-1] * self.optimizer.param_groups[0]['initial_lr']
-            self.optimizer.param_groups[1]['lr'] = gradual_warmup_steps[epoch-1] * self.optimizer.param_groups[1]['initial_lr']
-        elif epoch in lr_decay_epochs:
-            self.optimizer.param_groups[0]['lr'] *= 0.2
-            self.optimizer.param_groups[1]['lr'] *= 0.2
-
-        print(self.optimizer.param_groups[0]['lr'], self.optimizer.param_groups[1]['lr'])
+        # if epoch <= len(gradual_warmup_steps):
+        #     self.optimizer.param_groups[0]['lr'] = gradual_warmup_steps[epoch-1] * self.optimizer.param_groups[0]['initial_lr']
+        #     self.optimizer.param_groups[1]['lr'] = gradual_warmup_steps[epoch-1] * self.optimizer.param_groups[1]['initial_lr']
+        # elif epoch in lr_decay_epochs:
+        # print(self.optimizer.param_groups[0]['lr'], self.optimizer.param_groups[1]['lr'])
+        # if epoch in lr_decay_epochs:
+        #     self.optimizer.param_groups[0]['lr'] *= 0.5
+        #     self.optimizer.param_groups[1]['lr'] *= 0.5
+        # # freeze bert?
+        # print(self.optimizer.param_groups[0]['lr'], self.optimizer.param_groups[1]['lr'])
 
         self.model.train()
         # self.train_dataloader.dataset.is_training = True
+        lr_log = ''
 
         for step, batch in tqdm(enumerate(self.train_dataloader)):
             self.optimizer.zero_grad()
@@ -215,6 +218,7 @@ class TrainerBase:
                 self.optimizer.step()
 
             self.scheduler.step()
+            lr_log += '%.8f %.8f\n'%(self.optimizer.param_groups[0]['lr'], self.optimizer.param_groups[1]['lr'])
             self.model.zero_grad()
             self.loss = loss.item()
 
@@ -228,6 +232,9 @@ class TrainerBase:
                 break
         for metric in self.metrics:
             metric.calc()
+
+        with open(os.path.join(self.cfg.RUNTIME.SAVE_MODEL_DIR[8:], 'lr.txt'), 'a') as f:
+            f.write(lr_log)
 
     def report_step(self, step):
         logging.info("Training step: %s, loss: %s", (step + 1), self.loss)
