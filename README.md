@@ -1,6 +1,6 @@
 ### [Multimodal Video Similarity Challenge](https://algo.browser.qq.com/)
 #### [@CIKM 2021](https://www.cikm2021.org/analyticup) 
-This is the official pytorch version baseline built on our lichee framework
+This is the official pytorch version baseline built on our lichee framework hhhh
  
 #### 1. data
 Please download the 'data' directory and verify the integrity first, then prepare 'data' according to [data/README.md](data/README.md)
