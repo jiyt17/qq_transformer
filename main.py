@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import numpy as np
 
 from lichee import plugin
 
